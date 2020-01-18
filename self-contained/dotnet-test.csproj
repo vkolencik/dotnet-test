@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>dotnet_test</RootNamespace>
+    <RuntimeIdentifiers>linux-musl-x64</RuntimeIdentifiers>
+    <!-- <PublishTrimmed>true</PublishTrimmed>
+    <PublishSingleFile>true</PublishSingleFile> -->
+    <CrossGenDuringPublish>false</CrossGenDuringPublish>
+  </PropertyGroup>
+
+  <Target Name="TestMessage" AfterTargets="Build">
+    <Message Text="Target framework: $(TargetFramework)" Importance="high"/>
+  </Target>
+</Project>
