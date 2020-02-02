@@ -5,7 +5,7 @@ using System.Linq;
 namespace LinkChecker.Domain {
     public class LinkCheckerInput 
     {
-        public LinkCheckerInput(IEnumerable<Uri> links) 
+        public LinkCheckerInput(IEnumerable<Link> links) 
         {
             if (links == null)
             {
@@ -14,6 +14,6 @@ namespace LinkChecker.Domain {
             this.Links = links.ToList().AsReadOnly();
         }
 
-        public IEnumerable<Uri> Links { get; }
+        public IEnumerable<Link> Links { get; }
     }
 }

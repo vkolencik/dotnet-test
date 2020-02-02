@@ -6,11 +6,11 @@ namespace LinkChecker.Domain
 {
     public class LinkCheckResult
     {
-        public LinkCheckResult(IDictionary<Uri, LinkStatus> linkStates) 
+        public LinkCheckResult(IDictionary<Link, LinkStatus> linkStates) 
         {
-            this.LinkStates = new ReadOnlyDictionary<Uri, LinkStatus>(linkStates);
+            this.LinkStates = new ReadOnlyDictionary<Link, LinkStatus>(linkStates);
         }
 
-        public IDictionary<Uri, LinkStatus> LinkStates { get; }
+        public IDictionary<Link, LinkStatus> LinkStates { get; }
     }
 }

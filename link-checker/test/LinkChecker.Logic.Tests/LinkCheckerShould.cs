@@ -9,6 +9,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
 
 using LinkChecker;
 using LinkChecker.Domain;
@@ -17,13 +18,13 @@ namespace LinkChecker.Logic.Tests
 {
     public class LinkCheckerShould
     {
-        private static readonly List<Uri> _links = new List<Uri>
+        private static readonly List<Link> _links = new List<Link>
         {
-            new Uri("http://www.google.com/"),
-            new Uri("https://www.google.com/"),
-            new Uri("https://apod.nasa.gov/apod/astropix.html"),
-            new Uri("xtp://malformed-url"),
-            new Uri("http://unreachable:2323")
+            new Link("http://www.google.com/"),
+            new Link("https://www.google.com/"),
+            new Link("https://apod.nasa.gov/apod/astropix.html"),
+            new Link("xtp://malformed-url"),
+            new Link("http://unreachable:2323")
         };
 
         private ITestOutputHelper _testOutput;
@@ -38,21 +39,42 @@ namespace LinkChecker.Logic.Tests
         {
             // arrange
             var input = new LinkCheckerInput(_links);
-            var httpClient = CreateMockHttpClient((msg, token) => new HttpResponseMessage 
+            (var httpClient, _) = CreateMockHttpClient((msg, token) => new HttpResponseMessage 
             {
                 StatusCode = HttpStatusCode.OK
             });
             var linkChecker = new LinkChecker(httpClient);
 
-            // act
+            // act            
             var result = linkChecker.Check(input);
+            PrintOut(result);
 
             // assert
             result.LinkStates.Keys.Should().BeEquivalentTo(_links);
             result.LinkStates.Values.Should().OnlyContain(s => s == LinkStatus.OK);
         }
 
-        private HttpClient CreateMockHttpClient(Func<HttpRequestMessage, CancellationToken, HttpResponseMessage> returns)
+        [Fact]
+        public void ReportMalformedLinks()
+        {
+            // arrange
+            var malformedUrl = new Link("some-bad-link");
+            var input = new LinkCheckerInput(new [] { malformedUrl });
+            (var httpClient, var httpHandlerMock) = CreateMockHttpClient((msg, token) => throw new NotImplementedException());
+            var linkChecker = new LinkChecker(httpClient);
+
+            // act
+            var result = linkChecker.Check(input);
+            PrintOut(result);
+
+            // assert
+            result.LinkStates.Should().BeEquivalentTo(new Dictionary<Link, LinkStatus> {
+                [malformedUrl] = LinkStatus.MALFORMED
+            });
+            httpHandlerMock.Protected().Verify("SendAsync", Times.Never(), ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
+        }
+
+        private (HttpClient, Mock<HttpMessageHandler>) CreateMockHttpClient(Func<HttpRequestMessage, CancellationToken, HttpResponseMessage> returns)
         {
             var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
             handlerMock
@@ -67,7 +89,12 @@ namespace LinkChecker.Logic.Tests
                .ReturnsAsync(returns)
                .Verifiable();
             // use real http client with mocked handler here
-            return new HttpClient(handlerMock.Object);
+            return (new HttpClient(handlerMock.Object), handlerMock);
+        }
+
+        private void PrintOut(LinkCheckResult result)
+        {
+            _testOutput.WriteLine(string.Join(Environment.NewLine, result.LinkStates.Select((kvp) => $"{kvp.Key}: {kvp.Value}")));
         }
     }
 }

@@ -17,14 +17,26 @@ namespace LinkChecker.Logic
 
         public LinkCheckResult Check(LinkCheckerInput input) 
         {
-            var linkStates = new Dictionary<Uri, LinkStatus>();
+            var linkStates = new Dictionary<Link, LinkStatus>();
 
             foreach (var link in input.Links) 
             {
-                linkStates.Add(link, LinkStatus.OK);
+                linkStates.Add(link, CheckLink(link));
             }
             
             return new LinkCheckResult(linkStates);
+        }
+
+        private LinkStatus CheckLink(Link link)
+        {
+            bool wellFormattedLink = Uri.TryCreate(link.Url, UriKind.Absolute, out Uri uri);
+            if (!wellFormattedLink)
+            {
+                return LinkStatus.MALFORMED;
+            }
+
+            return LinkStatus.OK;
+
         }
     }
 }

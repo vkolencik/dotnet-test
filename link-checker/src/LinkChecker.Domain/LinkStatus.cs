@@ -2,7 +2,8 @@ namespace LinkChecker.Domain
 {
     public enum LinkStatus 
     {
-        UNAVAILABLE,
+        MALFORMED,
+        INVALID,
         OK
     }
 }
