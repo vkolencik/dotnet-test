@@ -94,12 +94,81 @@ namespace LinkChecker.Logic.Tests
         }
 
         [Fact]
-        public void ReportLinkAsInvalidIfTheIsErrorSendingRequest()
+        public void ReportLinkAsInvalidIfThereIsErrorSendingRequest()
         {
             // arrange
             var link = new Link("http://www.google.com/");
             var input = new LinkCheckerInput(new [] { link });
             (var httpClient, var httpHandlerMock) = CreateMockHttpClient((msg, token) => throw new HttpRequestException("Some random error"));
+            var linkChecker = new LinkChecker(httpClient);
+
+            // act
+            var result = linkChecker.Check(input);
+            PrintOut(result);
+
+            // assert
+            result.LinkStates.Should().BeEquivalentTo(new Dictionary<Link, LinkStatus> {
+                [link] = LinkStatus.INVALID
+            });
+            httpHandlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Exactly(1),
+                ItExpr.Is<HttpRequestMessage>(rm => rm.Method == HttpMethod.Get && rm.RequestUri == new Uri(link.Url)),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        public static IEnumerable<object[]> ValidLinkResponseMessages
+        {
+            get
+            {
+                yield return new object[] { new HttpResponseMessage { StatusCode = HttpStatusCode.OK } };
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(ValidLinkResponseMessages))]
+        public void ReportValidLinks(HttpResponseMessage responseMessage)
+        {
+            // arrange
+            var link = new Link("http://www.google.com/");
+            var input = new LinkCheckerInput(new [] { link });
+            (var httpClient, var httpHandlerMock) = CreateMockHttpClient((msg, token) => responseMessage);
+            var linkChecker = new LinkChecker(httpClient);
+
+            // act
+            var result = linkChecker.Check(input);
+            PrintOut(result);
+
+            // assert
+            result.LinkStates.Should().BeEquivalentTo(new Dictionary<Link, LinkStatus> {
+                [link] = LinkStatus.OK
+            });
+            httpHandlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Exactly(1),
+                ItExpr.Is<HttpRequestMessage>(rm => rm.Method == HttpMethod.Get && rm.RequestUri == new Uri(link.Url)),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        public static IEnumerable<object[]> InvalidLinkResponseMessages
+        {
+            get
+            {
+                yield return new object[] { new HttpResponseMessage { StatusCode = HttpStatusCode.NotAcceptable } };
+                yield return new object[] { new HttpResponseMessage { StatusCode = HttpStatusCode.NotFound } };
+                yield return new object[] { new HttpResponseMessage { StatusCode = HttpStatusCode.MethodNotAllowed } };
+                yield return new object[] { new HttpResponseMessage { StatusCode = HttpStatusCode.Unauthorized } };
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(InvalidLinkResponseMessages))]
+        public void ReportInvalidLinks(HttpResponseMessage responseMessage)
+        {
+            // arrange
+            var link = new Link("http://www.google.com/");
+            var input = new LinkCheckerInput(new [] { link });
+            (var httpClient, var httpHandlerMock) = CreateMockHttpClient((msg, token) => responseMessage);
             var linkChecker = new LinkChecker(httpClient);
 
             // act
@@ -138,6 +207,7 @@ namespace LinkChecker.Logic.Tests
 
         private void PrintOut(LinkCheckResult result)
         {
+            _testOutput.WriteLine("Result link states:");
             _testOutput.WriteLine(string.Join(Environment.NewLine, result.LinkStates.Select((kvp) => $"{kvp.Key}: {kvp.Value}")));
         }
     }

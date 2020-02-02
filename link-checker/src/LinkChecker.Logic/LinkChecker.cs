@@ -44,7 +44,7 @@ namespace LinkChecker.Logic
             {
                 var request = _httpClient.GetAsync(uri);
                 request.Wait();
-                //request.Result;
+                return request.Result.IsSuccessStatusCode ? LinkStatus.OK : LinkStatus.INVALID;
             }
             catch (HttpRequestException)
             {
