@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace LinkChecker.Domain {
-    public class LinkCheckerInput 
+    public class LinkCheckerInput
     {
-        public LinkCheckerInput(IEnumerable<Link> links) 
+        public LinkCheckerInput(IEnumerable<Link> links)
         {
             if (links == null)
             {

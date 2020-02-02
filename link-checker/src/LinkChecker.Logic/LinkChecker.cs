@@ -15,15 +15,15 @@ namespace LinkChecker.Logic
             _httpClient = httpClient;
         }
 
-        public LinkCheckResult Check(LinkCheckerInput input) 
+        public LinkCheckResult Check(LinkCheckerInput input)
         {
             var linkStates = new Dictionary<Link, LinkStatus>();
 
-            foreach (var link in input.Links) 
+            foreach (var link in input.Links)
             {
                 linkStates.Add(link, CheckLink(link));
             }
-            
+
             return new LinkCheckResult(linkStates);
         }
 
