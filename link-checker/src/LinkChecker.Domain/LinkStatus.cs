@@ -4,6 +4,7 @@ namespace LinkChecker.Domain
     {
         MALFORMED,
         INVALID,
+        SKIPPED,
         OK
     }
 }

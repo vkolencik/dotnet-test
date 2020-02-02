@@ -29,14 +29,29 @@ namespace LinkChecker.Logic
 
         private LinkStatus CheckLink(Link link)
         {
-            bool wellFormattedLink = Uri.TryCreate(link.Url, UriKind.Absolute, out Uri uri);
-            if (!wellFormattedLink)
+            bool isWellFormatted = Uri.TryCreate(link.Url, UriKind.Absolute, out Uri uri);
+            if (!isWellFormatted)
             {
                 return LinkStatus.MALFORMED;
             }
 
-            return LinkStatus.OK;
+            if (uri.Scheme != "http" && uri.Scheme != "https")
+            {
+                return LinkStatus.SKIPPED;
+            }
 
+            try
+            {
+                var request = _httpClient.GetAsync(uri);
+                request.Wait();
+                //request.Result;
+            }
+            catch (HttpRequestException)
+            {
+                return LinkStatus.INVALID;
+            }
+
+            return LinkStatus.OK;
         }
     }
 }

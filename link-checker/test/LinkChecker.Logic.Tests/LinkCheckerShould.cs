@@ -51,7 +51,6 @@ namespace LinkChecker.Logic.Tests
 
             // assert
             result.LinkStates.Keys.Should().BeEquivalentTo(_links);
-            result.LinkStates.Values.Should().OnlyContain(s => s == LinkStatus.OK);
         }
 
         [Fact]
@@ -74,6 +73,50 @@ namespace LinkChecker.Logic.Tests
             httpHandlerMock.Protected().Verify("SendAsync", Times.Never(), ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
         }
 
+        [Fact]
+        public void SkipNonHttpLinks()
+        {
+            // arrange
+            var malformedUrl = new Link("xtp://something.com/");
+            var input = new LinkCheckerInput(new [] { malformedUrl });
+            (var httpClient, var httpHandlerMock) = CreateMockHttpClient((msg, token) => throw new NotImplementedException());
+            var linkChecker = new LinkChecker(httpClient);
+
+            // act
+            var result = linkChecker.Check(input);
+            PrintOut(result);
+
+            // assert
+            result.LinkStates.Should().BeEquivalentTo(new Dictionary<Link, LinkStatus> {
+                [malformedUrl] = LinkStatus.SKIPPED
+            });
+            httpHandlerMock.Protected().Verify("SendAsync", Times.Never(), ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public void ReportLinkAsInvalidIfTheIsErrorSendingRequest()
+        {
+            // arrange
+            var link = new Link("http://www.google.com/");
+            var input = new LinkCheckerInput(new [] { link });
+            (var httpClient, var httpHandlerMock) = CreateMockHttpClient((msg, token) => throw new HttpRequestException("Some random error"));
+            var linkChecker = new LinkChecker(httpClient);
+
+            // act
+            var result = linkChecker.Check(input);
+            PrintOut(result);
+
+            // assert
+            result.LinkStates.Should().BeEquivalentTo(new Dictionary<Link, LinkStatus> {
+                [link] = LinkStatus.INVALID
+            });
+            httpHandlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Exactly(1),
+                ItExpr.Is<HttpRequestMessage>(rm => rm.Method == HttpMethod.Get && rm.RequestUri == new Uri(link.Url)),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
         private (HttpClient, Mock<HttpMessageHandler>) CreateMockHttpClient(Func<HttpRequestMessage, CancellationToken, HttpResponseMessage> returns)
         {
             var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
@@ -85,8 +128,9 @@ namespace LinkChecker.Logic.Tests
                   ItExpr.IsAny<HttpRequestMessage>(),
                   ItExpr.IsAny<CancellationToken>()
                )
+               .Callback<HttpRequestMessage, CancellationToken>((msg, tkn) => _testOutput.WriteLine($"HttpClient sending {msg.Method} request to {msg.RequestUri}"))
                // prepare the expected response of the mocked http call
-               .ReturnsAsync(returns)
+               .ReturnsAsync(returns)               
                .Verifiable();
             // use real http client with mocked handler here
             return (new HttpClient(handlerMock.Object), handlerMock);
