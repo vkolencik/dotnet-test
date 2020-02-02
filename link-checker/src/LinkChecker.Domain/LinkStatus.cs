@@ -1,6 +1,6 @@
-namespace LinkChecker.Domain 
+namespace LinkChecker.Domain
 {
-    public enum LinkStatus 
+    public enum LinkStatus
     {
         MALFORMED,
         INVALID,

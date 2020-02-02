@@ -39,13 +39,13 @@ namespace LinkChecker.Logic.Tests
         {
             // arrange
             var input = new LinkCheckerInput(_links);
-            (var httpClient, _) = CreateMockHttpClient((msg, token) => new HttpResponseMessage 
+            (var httpClient, _) = CreateMockHttpClient((msg, token) => new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK
             });
             var linkChecker = new LinkChecker(httpClient);
 
-            // act            
+            // act
             var result = linkChecker.Check(input);
             PrintOut(result);
 
@@ -190,17 +190,17 @@ namespace LinkChecker.Logic.Tests
         {
             var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
             handlerMock
-               .Protected()
-               // Setup the PROTECTED method to mock
-               .Setup<Task<HttpResponseMessage>>(
-                  "SendAsync",
-                  ItExpr.IsAny<HttpRequestMessage>(),
-                  ItExpr.IsAny<CancellationToken>()
-               )
-               .Callback<HttpRequestMessage, CancellationToken>((msg, tkn) => _testOutput.WriteLine($"HttpClient sending {msg.Method} request to {msg.RequestUri}"))
-               // prepare the expected response of the mocked http call
-               .ReturnsAsync(returns)               
-               .Verifiable();
+                .Protected()
+                // Setup the PROTECTED method to mock
+                .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>()
+                )
+                .Callback<HttpRequestMessage, CancellationToken>((msg, tkn) => _testOutput.WriteLine($"HttpClient sending {msg.Method} request to {msg.RequestUri}"))
+                // prepare the expected response of the mocked http call
+                .ReturnsAsync(returns)
+                .Verifiable();
             // use real http client with mocked handler here
             return (new HttpClient(handlerMock.Object), handlerMock);
         }
