@@ -33,7 +33,6 @@ namespace Tests
             _output.WriteLine("Assigned house memberships:");
             houseMemberships.ToList().ForEach(kvp => _output.WriteLine($"* {kvp.Key} in {kvp.Value}"));
 
-            _output.WriteLine(JsonConvert.SerializeObject(houseMemberships));
             // assert
             Assert.Equal(House.Slytherin, houseMemberships[draco]);
         }
