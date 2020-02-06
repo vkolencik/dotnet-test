@@ -50,8 +50,6 @@ namespace LinkChecker.Logic
             {
                 return LinkStatus.INVALID;
             }
-
-            return LinkStatus.OK;
         }
     }
 }
