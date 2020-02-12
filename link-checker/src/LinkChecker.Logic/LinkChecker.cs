@@ -15,6 +15,8 @@ namespace LinkChecker.Logic
             _httpClient = httpClient;
         }
 
+        public LinkChecker() : this(new HttpClient()) { }
+
         public LinkCheckResult Check(LinkCheckerInput input)
         {
             var linkStates = new Dictionary<Link, LinkStatus>();

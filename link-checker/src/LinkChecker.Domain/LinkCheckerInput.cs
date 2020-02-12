@@ -11,7 +11,8 @@ namespace LinkChecker.Domain {
             {
                 throw new ArgumentNullException(nameof(links));
             }
-            this.Links = links.ToList().AsReadOnly();
+
+            this.Links = links;
         }
 
         public IEnumerable<Link> Links { get; }
